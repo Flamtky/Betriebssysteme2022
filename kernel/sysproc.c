@@ -6,6 +6,8 @@
 #include "memlayout.h"
 #include "spinlock.h"
 #include "proc.h"
+#include "syscall.h"
+#include "sysinfo.h"
 
 uint64
 sys_exit(void)
@@ -94,4 +96,21 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+// sys_sysinfo: return system information to user
+// It contains the free memory size in bytes and the count of running processes.
+uint64 sys_sysinfo(void) {
+  struct proc *p = myproc();
+  struct sysinfo si;
+  uint64 addr;
+
+  if(argaddr(0, &addr) < 0) {
+    return -1;
+  }
+
+  si.freemem =  get_free_mem_size();
+  si.nproc = get_running_processes();
+
+  return copyout(p->pagetable, addr, (char*)&si, sizeof(si));
 }

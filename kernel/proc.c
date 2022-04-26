@@ -654,3 +654,16 @@ procdump(void)
     printf("\n");
   }
 }
+
+// Gets count of running processes (runnings is when state is not UNUSED)
+int get_running_processes(void)
+{
+  struct proc *p;
+  int count = 0;
+
+  for(p = proc; p < &proc[NPROC]; p++){
+    if(p->state != UNUSED)
+      count++;
+  }
+  return count;
+}
