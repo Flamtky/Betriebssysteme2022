@@ -32,6 +32,20 @@ strlen(const char *s)
   return n;
 }
 
+// strstr: find first occurrence of s2 in s1
+char *strstr(char *X, char *Y)
+{
+  if (*Y == '\0')
+    return X;
+  for (int i = 0; i < strlen(X); i++) {
+    if (*(X + i) == *Y) {
+      char *ptr = strstr(X + i + 1, Y + 1);
+      return (ptr) ? ptr - 1 : 0;
+    }
+  }
+  return 0;
+}
+
 void*
 memset(void *dst, int c, uint n)
 {
