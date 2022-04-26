@@ -20,7 +20,15 @@ void find(char *path, char *term)
   // Get stats on the directory.
   if (fstat(fd, &st) < 0)
   {
-    fprintf(2, "find: cannot get current file stats %s\n", path);
+    fprintf(2, "find: cannot get stats on current path %s\n", path);
+    close(fd);
+    return;
+  }
+
+  // Check if path is too long
+  if (strlen(path) + 1 + DIRSIZ + 1 > sizeof buf)
+  {
+    fprintf(2, "find: path too long\n");
     close(fd);
     return;
   }
