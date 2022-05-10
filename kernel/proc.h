@@ -105,4 +105,6 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+  int tracemask;               // Bitmask of tracing events
+  uint64 stacksize;            // Size of user stack
 };

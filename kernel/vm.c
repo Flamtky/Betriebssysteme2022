@@ -283,11 +283,11 @@ freewalk(pagetable_t pagetable)
 
 // Free user memory pages,
 // then free page-table pages.
-void
-uvmfree(pagetable_t pagetable, uint64 sz)
-{
-  if(sz > 0)
-    uvmunmap(pagetable, 0, PGROUNDUP(sz)/PGSIZE, 1);
+void uvmfree(pagetable_t pagetable, uint64 sz, uint64 stacksize) {
+  if (sz > 0) uvmunmap(pagetable, 0, PGROUNDUP(sz) / PGSIZE, 1);
+  if (stacksize > 0)
+    uvmunmap(pagetable, USTACKTOP - stacksize,
+              PGROUNDUP(stacksize) / PGSIZE, 1);
   freewalk(pagetable);
 }
 
@@ -297,19 +297,15 @@ uvmfree(pagetable_t pagetable, uint64 sz)
 // physical memory.
 // returns 0 on success, -1 on failure.
 // frees any allocated pages on failure.
-int
-uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
-{
+int uvmcopy(pagetable_t old, pagetable_t new, uint64 btn, uint64 top) {
   pte_t *pte;
   uint64 pa, i;
   uint flags;
   char *mem;
 
-  for(i = 0; i < sz; i += PGSIZE){
-    if((pte = walk(old, i, 0)) == 0)
-      panic("uvmcopy: pte should exist");
-    if((*pte & PTE_V) == 0)
-      panic("uvmcopy: page not present");
+  for (i = btn; i < top; i += PGSIZE) {
+    if ((pte = walk(old, i, 0)) == 0) panic("uvmcopy: pte should exist");
+    if ((*pte & PTE_V) == 0) panic("uvmcopy: page not present");
     pa = PTE2PA(*pte);
     flags = PTE_FLAGS(*pte);
     if((mem = kalloc()) == 0)
@@ -431,4 +427,44 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
   } else {
     return -1;
   }
+}
+
+// Vmprint prints the contents of a page table.
+// It prints the depth of the page table, and the contents of each page plus its
+// address and flags.
+void _vmprint(pagetable_t pagetable, int level) {
+  int i, levelCounter;
+  pte_t pte;
+  uint64 pa, flags;
+  // there are 2^9 = 512 PTEs in a page table.
+  for (i = 0; i < 512; i++) {
+    pte = pagetable[i];
+    if ((pte & PTE_V) == 0) continue;
+    pa = PTE2PA(pte);
+    flags = PTE_FLAGS(pte);
+    for (levelCounter = 0; levelCounter <= level; levelCounter++) {
+      printf(".. ");
+    }
+    // print the level with pte and pa
+    printf("%d: pte %p pa %p flags ", i, pte, pa);
+    // print the flags
+    printf((flags & PTE_U) ? "U" : "-");
+    printf((flags & PTE_X) ? "X" : "-");
+    printf((flags & PTE_W) ? "W" : "-");
+    printf((flags & PTE_R) ? "R" : "-");
+    printf((flags & PTE_V) ? "V" : "-");
+    
+    printf("\n");
+
+    if ((pte & (PTE_R | PTE_W | PTE_X)) == 0) {
+      _vmprint((pagetable_t)pa, level+1);
+    }
+  }
+}
+
+
+void vmprint(pagetable_t pagetable) {
+  // char *mem;
+  printf("page table %p\n", pagetable);
+  _vmprint(pagetable, 0);
 }
