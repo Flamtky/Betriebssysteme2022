@@ -121,8 +121,8 @@ void backtrace(void) {
   uint64 addr;
 
   addr = sfp - 8;
-  while (PGROUNDUP(sfp) > addr-8 && addr-8 > PGROUNDDOWN(sfp)) {
-    printf("%p \n", *(uint64*)addr);;
+  while (PGROUNDUP(sfp) > addr+8 && addr+8 > PGROUNDDOWN(sfp)) {
+    printf("%p \n", *(uint64*)addr);
     addr = *(uint64*)(addr - 8)-8;
   }
 }
