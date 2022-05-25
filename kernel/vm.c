@@ -5,6 +5,8 @@
 #include "riscv.h"
 #include "defs.h"
 #include "fs.h"
+#include "spinlock.h"
+#include "proc.h"
 
 /*
  * the kernel's page table.
@@ -87,7 +89,7 @@ pte_t *walk(pagetable_t pagetable, uint64 va, int alloc) {
 }
 
 // Look up a virtual address, return the physical address,
-// or 0 if not mapped.
+// or 0 if its not possible to map it.
 // Can only be used to look up user pages.
 uint64 walkaddr(pagetable_t pagetable, uint64 va) {
   pte_t *pte;
@@ -96,9 +98,28 @@ uint64 walkaddr(pagetable_t pagetable, uint64 va) {
   if (va >= MAXVA) return 0;
 
   pte = walk(pagetable, va, 0);
-  if (pte == 0) return 0;
-  if ((*pte & PTE_V) == 0) return 0;
-  if ((*pte & PTE_U) == 0) return 0;
+  if (pte == 0 || (*pte & PTE_V) == 0 || (*pte & PTE_U) == 0) {
+    // page fault
+    uint64 bot = PGROUNDDOWN(va);
+    char *mem;
+
+    // only lazy alloc if addr is allocated with sbrk
+    if (va >= PGROUNDUP(myproc()->trapframe->sp) && va < myproc()->sz) {
+      // alloc with 0s
+      mem = kalloc();
+      if (mem == 0) {
+        return 0;
+      }
+      memset(mem, 0, PGSIZE);
+      if (mappages(pagetable, bot, PGSIZE, (uint64)mem,
+                    PTE_X | PTE_W | PTE_U | PTE_R) < 0) {
+        kfree(mem);
+        return 0;
+      }
+    } else {
+      return 0;
+    }
+  }
   pa = PTE2PA(*pte);
   return pa;
 }
