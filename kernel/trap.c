@@ -62,7 +62,7 @@ void usertrap(void) {
     char *mem;
 
     // only lazy alloc if addr is allocated with sbrk
-    if (vCause >= PGROUNDUP(p->trapframe->sp) && vCause <= p->sz) {
+    if (vCause >= PGROUNDUP(p->trapframe->sp) && vCause < p->sz) {
       // alloc with 0s
       mem = kalloc();
       if (mem == 0) {
