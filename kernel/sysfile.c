@@ -275,11 +275,13 @@ uint64 sys_open(void) {
     }
 
     // check permission of file
-    if ((omode & O_RDONLY && permission(ip, O_READ) == 0)||
-        (omode & O_WRONLY && permission(ip, O_WRITE) == 0) ||
-        (omode & O_RDWR && (permission(ip, O_WRITE) == 0 || permission(ip, O_READ) == 0))) {
-      end_op();
-      return -1;
+    if (!(omode & O_NOFOLLOW) && ip->type == T_SYMLINK) {
+      if ((omode & O_RDONLY && permission(ip, O_READ) == 0) ||
+          (omode & O_WRONLY && permission(ip, O_WRITE) == 0) ||
+          (omode & O_RDWR && (permission(ip, O_WRITE) == 0 || permission(ip, O_READ) == 0))) {
+        end_op();
+        return -1;
+      }
     }
 
     ilock(ip);
@@ -309,6 +311,14 @@ uint64 sys_open(void) {
       end_op();
       return -1;
     }
+  }
+
+  if ((omode & O_RDONLY && permission(ip, O_READ) == 0) ||
+      (omode & O_WRONLY && permission(ip, O_WRITE) == 0) ||
+      (omode & O_RDWR && (permission(ip, O_WRITE) == 0 || permission(ip, O_READ) == 0))) {
+    iunlockput(ip);
+    end_op();
+    return -1;
   }
 
   if (ip->type == T_DEVICE && (ip->major < 0 || ip->major >= NDEV)) {
@@ -508,8 +518,7 @@ uint64 sys_chown(void) {
     return 0;
   }
   ilock(ip);
-  if (myproc()->uid == 0)
-    ip->uid = uid;
+  if (myproc()->uid == 0) ip->uid = uid;
   ip->gid = gid;
   iupdate(ip);
   iunlockput(ip);
@@ -531,8 +540,7 @@ uint64 sys_chmod(void) {
     return -1;
   }
 
-  if (myproc()->uid != 0 && myproc()->uid != ip->uid)
-    return 0;
+  if (myproc()->uid != 0 && myproc()->uid != ip->uid) return 0;
   ilock(ip);
   ip->mode = mode;
   iupdate(ip);
