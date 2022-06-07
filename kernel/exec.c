@@ -6,6 +6,7 @@
 #include "proc.h"
 #include "defs.h"
 #include "elf.h"
+#include "fs.h"
 
 static int loadseg(pde_t *pgdir, uint64 addr, struct inode *ip, uint offset,
                    uint sz);
@@ -27,6 +28,11 @@ int exec(char *path, char **argv) {
     return -1;
   }
   ilock(ip);
+
+  // check permission
+  if (permission(ip, O_EXEC) == 0) {
+    goto bad;
+  }
 
   // Check ELF header
   if (readi(ip, 0, (uint64)&elf, 0, sizeof(elf)) != sizeof(elf)) goto bad;

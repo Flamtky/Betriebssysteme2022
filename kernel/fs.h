@@ -37,7 +37,7 @@ struct dinode {
   uint addrs[NDIRECT + 1];  // Data block addresses
   short uid;                // Owner uid
   short gid;                // Group id
-  uint mode;                // File mode
+  short mode;                // File mode
 };
 
 // Inodes per block.
@@ -54,6 +54,23 @@ struct dinode {
 
 // Directory is a file containing a sequence of dirent structures.
 #define DIRSIZ 14
+
+// Permission
+#define O_READ 0x01
+#define O_WRITE 0x02
+#define O_EXEC 0x04
+
+#define P_RUSR 0b100000000
+#define P_WUSR 0b010000000
+#define P_XUSR 0b001000000
+
+#define P_RGRP 0b000100000
+#define P_WGRP 0b000010000
+#define P_XGRP 0b000001000
+
+#define P_ROTH 0b000000100
+#define P_WOTH 0b000000010
+#define P_XOTH 0b000000001
 
 struct dirent {
   ushort inum;

@@ -21,3 +21,9 @@
 #define SYS_mkdir 20
 #define SYS_close 21
 #define SYS_symlink 22
+#define SYS_chown 23
+#define SYS_chmod 24
+#define SYS_getuid 25
+#define SYS_setuid 26
+#define SYS_getgid 27
+#define SYS_setgid 28

@@ -219,6 +219,9 @@ void userinit(void) {
 
   p->state = RUNNABLE;
 
+  p->uid = 0;
+  p->gid = 0;
+
   release(&p->lock);
 }
 
@@ -283,6 +286,11 @@ int fork(void) {
 
   acquire(&np->lock);
   np->state = RUNNABLE;
+  release(&np->lock);
+  
+  acquire(&np->lock);
+  np->gid = p->gid;
+  np->uid = p->uid;
   release(&np->lock);
 
   return pid;

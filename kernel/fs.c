@@ -214,6 +214,9 @@ void iupdate(struct inode *ip) {
   dip->minor = ip->minor;
   dip->nlink = ip->nlink;
   dip->size = ip->size;
+  dip->gid = ip->gid;
+  dip->uid = ip->uid;
+  dip->mode = ip->mode;
   memmove(dip->addrs, ip->addrs, sizeof(ip->addrs));
   log_write(bp);
   brelse(bp);
@@ -279,6 +282,9 @@ void ilock(struct inode *ip) {
     ip->minor = dip->minor;
     ip->nlink = dip->nlink;
     ip->size = dip->size;
+    ip->uid = dip->uid;
+    ip->gid = dip->gid;
+    ip->mode = dip->mode;
     memmove(ip->addrs, dip->addrs, sizeof(ip->addrs));
     brelse(bp);
     ip->valid = 1;
@@ -405,6 +411,9 @@ void stati(struct inode *ip, struct stat *st) {
   st->type = ip->type;
   st->nlink = ip->nlink;
   st->size = ip->size;
+  st->gid = ip->gid;
+  st->uid = ip->uid;
+  st->mode = ip->mode;
 }
 
 // Read data from inode.
@@ -597,4 +606,51 @@ struct inode *namei(char *path) {
 
 struct inode *nameiparent(char *path, char *name) {
   return namex(path, 1, name);
+}
+
+// permission check for a file (0: no permission, 1: permission)
+int permission(struct inode *ip, int mask) {
+  if (ip == 0) return 0;
+
+  // check if root
+  if (myproc()->uid == 0) return 1;
+
+  // check if owner
+  if (myproc()->uid == ip->uid) {
+    if (mask & O_READ) {
+      if (ip->mode & P_RUSR) return 1;
+    }
+    if (mask & O_WRITE) {
+      if (ip->mode & P_WUSR) return 1;
+    }
+    if (mask & O_EXEC) {
+      if (ip->mode & P_XUSR) return 1;
+    }
+  }
+
+  // check if group
+  if (myproc()->gid == ip->gid) {
+    if (mask & O_READ) {
+      if (ip->mode & P_RGRP) return 1;
+    }
+    if (mask & O_WRITE) {
+      if (ip->mode & P_WGRP) return 1;
+    }
+    if (mask & O_EXEC) {
+      if (ip->mode & P_XGRP) return 1;
+    }
+  }
+
+  // check if other
+  if (mask & O_READ) {
+    if (ip->mode & P_ROTH) return 1;
+  }
+  if (mask & O_WRITE) {
+    if (ip->mode & P_WOTH) return 1;
+  }
+  if (mask & O_EXEC) {
+    if (ip->mode &P_XOTH) return 1;
+  }
+
+  return 0;
 }

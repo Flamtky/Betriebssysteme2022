@@ -11,4 +11,5 @@ struct stat {
   uint64 size;  // Size of file in bytes
   short uid;    // User ID of owner
   short gid;    // Group ID of owner
+  short mode;   // Permissions
 };

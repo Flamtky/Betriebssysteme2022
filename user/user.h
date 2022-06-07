@@ -23,6 +23,14 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+int symlink(char*, char*);
+int chown(char*, int, int);
+int chmod(char*, int);
+int getuid(void);
+int setuid(int);
+int getgid(void);
+int setgid(int);
+
 
 // ulib.c
 int stat(const char*, struct stat*);
@@ -40,4 +48,3 @@ void free(void*);
 int atoi(const char*);
 int memcmp(const void *, const void *, uint);
 void *memcpy(void *, const void *, uint);
-int symlink(char*, char*);
