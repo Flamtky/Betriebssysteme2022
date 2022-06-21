@@ -172,8 +172,19 @@ struct dns_data {
   uint16 len;
 } __attribute__((packed));
 
-// sntp reqest and response header
+// sntp request and response header
 // see: https://www.rfc-editor.org/rfc/rfc4330.html#page-8
 struct sntp {
+  uint8 lvm; // leap indicator
+  uint8 stratum; // stratum
+  uint8 poll; // poll interval
+  uint8 precision; // precision
 
+  uint32 root_delay; // root delay
+  uint32 root_dispersion; // root dispersion
+  uint32 reference_id; // reference I64
+  uint64 reference_timestamp; // reference timestamp
+  uint64 originate_timestamp; // originate timestamp
+  uint64 receive_timestamp; // receive timestamp
+  uint64 transmit_timestamp; // transmit timestamp
 } __attribute__((packed));
